@@ -9,7 +9,7 @@ Set inventory size to 100 and galleons to 1000 and overwrite:
 Set first and last name and write to out.sav:   
 `hlse_x64.exe -i HL-00-00.sav --first-name "first name" --last-name "last name" -o out.sav`
 
-Probe save:
+Probe save:    
 `hlse_x64.exe -i HL-00-00.sav -p`
 ```
 Name:           first name last name
