@@ -9,6 +9,9 @@ Set inventory size to 100 and galleons to 1000 and overwrite:
 Set first and last name and write to out.sav:   
 `hlse_x64.exe -i HL-00-00.sav --first-name "first name" --last-name "last name" -o out.sav`
 
+Set quantities of inventory items:   
+`hlse_x64.exe -i HL-00-00.sav --item-quantities StenchOfTheDead 100 LacewingFlies 10`
+
 Probe save:    
 `hlse_x64.exe -i HL-00-00.sav -p`
 ```
@@ -17,10 +20,15 @@ XP:             2000
 House:          Hufflepuff
 Galleons:       1000
 Inventory size: 100
-```
 
+Inventory:
+Knuts, 152506
+LacewingFlies, 84
+LeapingToadstool_Byproduct, 120
+Moonstone, 654
+AshwinderEggs, 37
 ```
-Usage: hlse_x64.exe --inpath INPATH [--outpath OUTPATH] [--xp XP] [--galleons GALLEONS] [--first-name FIRST-NAME] [--last-name LAST-NAME] [--inventory-size INVENTORY-SIZE] [--probe]
+Usage: hlse_x64.exe --inpath INPATH [--outpath OUTPATH] [--xp XP] [--galleons GALLEONS] [--first-name FIRST-NAME] [--last-name LAST-NAME] [--inventory-size INVENTORY-SIZE] [--probe] [--item-quantities ITEM-QUANTITIES]
 
 Options:
   --inpath INPATH, -i INPATH
@@ -36,7 +44,11 @@ Options:
   --inventory-size INVENTORY-SIZE
                          Set inventory size.
   --probe, -p            Probe save file and exit.
+  --item-quantities ITEM-QUANTITIES
+                         Set quantities of inventory items. <item ID> <quantity> pairs separated by spaces.
   --help, -h             display this help and exit
+```
+
   ```
 
 ## Disclaimer
