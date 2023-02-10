@@ -1,5 +1,5 @@
 # HLSE - Hogwarts-Legacy-Save-Editor
-Save editor for Hogwarts Legacy written in Go.
+Save editor for Hogwarts Legacy written in Go.    
 [Windows binaries](https://github.com/Sorrow446/HLSE-Hogwarts-Legacy-Save-Editor/releases)
 
 ## Usage
