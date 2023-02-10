@@ -1,8 +1,10 @@
 # HLSE - Hogwarts-Legacy-Save-Editor
 Save editor for Hogwarts Legacy written in Go.
 
-# Usage
+## Anti-virus false positives
+AV algorithms hate Go binaries; nothing to worry about.
 
+## Usage
 Set inventory size to 100 and galleons to 1000 and overwrite:   
 `hlse_x64.exe -i HL-00-00.sav --inventory-size 100 --galleons 1000`
 
@@ -39,7 +41,7 @@ Options:
   --help, -h             display this help and exit
   ```
 
-# Disclaimer
+## Disclaimer
 - I will not be responsible for any possibility of save corruption.    
 - Hogwarts Legacy brand and name is the registered trademark of its respective owner.    
 - HLSE has no partnership, sponsorship or endorsement with Avalanche Software or Warner Bros. Games.
