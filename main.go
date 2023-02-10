@@ -157,10 +157,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
 
 	if args.Probe {
 		err = probe.Run(db)
+		db.Close()
 		if err != nil {
 			panic(err)
 		}
@@ -170,6 +170,7 @@ func main() {
 	if args.XP > 0 {
 		err = updateRow(db, fmt.Sprintf(queries["xp"], args.XP))
 		if err != nil {
+			db.Close()
 			panic(err)
 		}
 	}
@@ -177,6 +178,7 @@ func main() {
 	if args.Galleons > 0 {
 		err = updateRow(db, fmt.Sprintf(queries["galleons"], args.Galleons))
 		if err != nil {
+			db.Close()
 			panic(err)
 		}
 	}
@@ -184,6 +186,7 @@ func main() {
 	if args.InventorySize > 0 {
 		err = updateRow(db, fmt.Sprintf(queries["inventory_size"], args.InventorySize))
 		if err != nil {
+			db.Close()
 			panic(err)
 		}
 	}
@@ -191,6 +194,7 @@ func main() {
 	if args.FirstName != "" {
 		err = updateRow(db, fmt.Sprintf(queries["first_name"], args.FirstName))
 		if err != nil {
+			db.Close()
 			panic(err)
 		}
 	}
@@ -198,10 +202,11 @@ func main() {
 	if args.Surname != "" {
 		err = updateRow(db, fmt.Sprintf(queries["surname"], args.Surname))
 		if err != nil {
+			db.Close()
 			panic(err)
 		}
 	}	
-
+	db.Close()
 	updatedDbBytes, err := os.ReadFile(dbPath)
 	if err != nil {
 		panic(err)
