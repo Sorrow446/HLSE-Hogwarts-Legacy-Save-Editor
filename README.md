@@ -28,6 +28,8 @@ LeapingToadstool_Byproduct, 120
 Moonstone, 654
 AshwinderEggs, 37
 ```
+
+```
 Usage: hlse_x64.exe --inpath INPATH [--outpath OUTPATH] [--xp XP] [--galleons GALLEONS] [--first-name FIRST-NAME] [--last-name LAST-NAME] [--inventory-size INVENTORY-SIZE] [--probe] [--item-quantities ITEM-QUANTITIES]
 
 Options:
