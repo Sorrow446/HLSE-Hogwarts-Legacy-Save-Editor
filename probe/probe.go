@@ -113,8 +113,25 @@ func Run(db *sql.DB) error {
 	}
 
 	fmt.Printf(
-		"Name:           %s\nXP:             %d\nHouse:          %s\nGalleons:       %d\nInventory size: %d",
+		"Name:           %s\nXP:             %d\nHouse:          %s\nGalleons:       %d\nInventory size: %d\n\n",
 		playerName, xp, house, galleons, inv_size,
 	)
+
+	fmt.Println("Inventory:")
+	var itemId string
+	var quantity int64
+
+	rows, err := db.Query(`SELECT "ItemID", "Count" FROM "InventoryDynamic" WHERE "CharacterID" = "Player0" AND "HolderID" = "ResourceInventory"`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&itemId, &quantity)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s, %d\n", itemId, quantity)
+	}
 	return nil
 }

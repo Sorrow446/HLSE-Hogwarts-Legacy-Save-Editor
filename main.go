@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"fmt"
 	"os"
+	"strings"
+	"strconv"
 
 	"github.com/alexflint/go-arg"
 	_ "github.com/mattn/go-sqlite3"
@@ -41,17 +43,62 @@ func extractDb(saveData []byte) (int, int, error) {
 }
 
 var queries = map[string]string{
-	"galleons":      `UPDATE "InventoryDynamic" SET "Count" = %d WHERE "CharacterID" = "Player0" AND "ItemID" = "Knuts"`,
-	"xp":            `UPDATE "MiscDataDynamic" SET "DataValue" = %d WHERE "DataName" = "ExperiencePoints"`,
-	"first_name":    `UPDATE "MiscDataDynamic" SET "DataValue" = "%s" WHERE "DataName" = "PlayerFirstName"`,
-	"surname":       `UPDATE "MiscDataDynamic" SET "DataValue" = "%s" WHERE "DataName" = "PlayerLastName"`,
-	"inventory_size": `UPDATE "MiscDataDynamic" SET "DataValue" = %d WHERE "DataName" = "BaseInventoryCapacity"`,
+	"galleons":        `UPDATE "InventoryDynamic" SET "Count" = %d WHERE "CharacterID" = "Player0" AND "ItemID" = "Knuts"`,
+	"xp":              `UPDATE "MiscDataDynamic" SET "DataValue" = %d WHERE "DataName" = "ExperiencePoints"`,
+	"first_name":      `UPDATE "MiscDataDynamic" SET "DataValue" = "%s" WHERE "DataName" = "PlayerFirstName"`,
+	"surname":         `UPDATE "MiscDataDynamic" SET "DataValue" = "%s" WHERE "DataName" = "PlayerLastName"`,
+	"inventory_size":  `UPDATE "MiscDataDynamic" SET "DataValue" = %d WHERE "DataName" = "BaseInventoryCapacity"`,
+	"inventory_quant": `UPDATE "InventoryDynamic" SET "Count" = %d WHERE "CharacterID" = "Player0" AND "HolderID" = "ResourceInventory" AND LOWER(ItemId) = "%s"`,
+}
+
+func containsItemId(parsed []*ItemPairs, itemId string) bool {
+	for _, pair := range parsed {
+		if pair.ItemID == itemId {
+			return true
+		}
+	}
+	return false
+}
+
+func parseInvPairs(pairs []string) ([]*ItemPairs, error) {
+	pairsLen := len(pairs)
+	if pairsLen%2 !=0 {
+		return nil, errors.New("item quantity pairs can't be odd")
+	}
+
+	var parsed []*ItemPairs
+
+	for i := 0; i < pairsLen; i+=2 {
+		itemId := strings.ToLower(pairs[i])
+		quantity, err := strconv.ParseInt(pairs[i+1], 10, 64)
+		if err != nil {
+		    return nil, err
+		}
+		pair := &ItemPairs{
+			ItemID: itemId,
+			Quantity: quantity,
+		}
+		if containsItemId(parsed, itemId) {
+			fmt.Println("filtered pair with same item ID:", pair)
+			continue
+		}
+
+		parsed = append(parsed, pair)
+	}
+
+	return parsed, nil
 }
 
 func parseArgs() (*Args, error) {
 	var args Args
 	arg.MustParse(&args)
-
+	if len(args.ItemQuantities) > 0 {
+		invPairs, err := parseInvPairs(args.ItemQuantities)
+		if err != nil {
+			return nil, err
+		}
+		args.ParsedItemQuants = invPairs
+	}
 	if args.XP < 0 {
 		return nil, errors.New("xp can't be negative")
 	}
@@ -63,7 +110,7 @@ func parseArgs() (*Args, error) {
 		return nil, errors.New("inventory size can't be less than 20")
 	}
 
-	if !args.Probe && args.XP == 0 && args.Galleons == 0 && args.InventorySize == 0 && args.FirstName == "" && args.Surname == "" {
+	if !args.Probe && args.XP == 0 && args.Galleons == 0 && args.InventorySize == 0 && len(args.ItemQuantities) < 1 && args.FirstName == "" && args.Surname == "" {
 		return nil, errors.New("no write arguments were provided")
 	}
 
@@ -205,7 +252,18 @@ func main() {
 			db.Close()
 			panic(err)
 		}
-	}	
+	}
+
+	if len(args.ItemQuantities) > 0 {
+		for _, pair := range args.ParsedItemQuants {
+			err = updateRow(db, fmt.Sprintf(queries["inventory_quant"], pair.Quantity, pair.ItemID))
+			if err != nil {
+				db.Close()
+				panic(err)
+			}
+		}
+	}
+
 	db.Close()
 	updatedDbBytes, err := os.ReadFile(dbPath)
 	if err != nil {
