@@ -22,7 +22,7 @@ Galleons:       1000
 Inventory size: 100
 
 Inventory:
-Knuts, 152506
+Knuts, 1000
 LacewingFlies, 84
 LeapingToadstool_Byproduct, 120
 Moonstone, 654
