@@ -11,6 +11,7 @@ type Args struct {
 	Probe            bool     `arg:"-p" help:"Probe save file and exit."`
 	ItemQuantities   []string `arg:"--item-quantities" help:"Set quantities of inventory items. <item ID> <quantity> pairs separated by spaces."`
 	ParsedItemQuants []*ItemPairs `arg:"-"`
+	TalentPoints     int      `arg:"--talent-points" help:"Set talent points."`
 }
 
 type ItemPairs struct {

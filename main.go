@@ -49,6 +49,7 @@ var queries = map[string]string{
 	"surname":         `UPDATE "MiscDataDynamic" SET "DataValue" = "%s" WHERE "DataName" = "PlayerLastName"`,
 	"inventory_size":  `UPDATE "MiscDataDynamic" SET "DataValue" = %d WHERE "DataName" = "BaseInventoryCapacity"`,
 	"inventory_quant": `UPDATE "InventoryDynamic" SET "Count" = %d WHERE "CharacterID" = "Player0" AND "HolderID" = "ResourceInventory" AND LOWER(ItemId) = "%s"`,
+	"talent_points":   `UPDATE "MiscDataDynamic" SET "DataValue" = %d WHERE "DataOwner" = "Player0" AND "DataName" = "PerkPoints"`,
 }
 
 func containsItemId(parsed []*ItemPairs, itemId string) bool {
@@ -110,8 +111,16 @@ func parseArgs() (*Args, error) {
 		return nil, errors.New("inventory size can't be less than 20")
 	}
 
-	if !args.Probe && args.XP == 0 && args.Galleons == 0 && args.InventorySize == 0 && len(args.ItemQuantities) < 1 && args.FirstName == "" && args.Surname == "" {
+	noArgs := !args.Probe && args.XP == 0 && args.Galleons == 0 &&
+		args.InventorySize == 0 && args.TalentPoints == 0 &&
+		len(args.ItemQuantities) < 1 && args.FirstName == "" && args.Surname == ""
+
+	if noArgs {
 		return nil, errors.New("no write arguments were provided")
+	}
+
+	if args.TalentPoints < 0 {
+		return nil, errors.New("talent points can't be negative")
 	}
 
 	if args.OutPath == "" {
@@ -261,6 +270,14 @@ func main() {
 				db.Close()
 				panic(err)
 			}
+		}
+	}
+
+	if args.TalentPoints > 0 {
+		err = updateRow(db, fmt.Sprintf(queries["talent_points"], args.TalentPoints))
+		if err != nil {
+			db.Close()
+			panic(err)
 		}
 	}
 

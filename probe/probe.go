@@ -12,13 +12,18 @@ var (
 	queryTemplateExt = `SELECT "%s" FROM "%s" WHERE "%s" = "%s" AND "%s" = "%s"`
 )
 
-var queries = map[string][]string{
+var tempQueries = map[string][]string{
 	"first_name": 		  {"DataValue", "MiscDataDynamic", "DataName", "PlayerFirstName"},
 	"surname":    		  {"DataValue", "MiscDataDynamic", "DataName", "PlayerLastName"},
 	"xp":         		  {"DataValue", "MiscDataDynamic", "DataName", "ExperiencePoints"},
 	"house":      		  {"DataValue", "MiscDataDynamic", "DataName", "HouseID"},
 	"galleons":   		  {"Count", "InventoryDynamic", "CharacterID", "Player0", "ItemID", "Knuts"},
 	"inventory_size":     {"DataValue", "MiscDataDynamic", "DataName", "BaseInventoryCapacity"},
+	"talent_points":      {"DataValue", "MiscDataDynamic", "DataOwner", "Player0", "DataName", "PerkPoints"},
+}
+
+var queries = map[string]string{
+	"inventory": `SELECT "ItemID", "Count" FROM "InventoryDynamic" WHERE "CharacterID" = "Player0" AND "HolderID" = "ResourceInventory" AND "ItemID" IS NOT NULL`,
 }
 
 func queryRow(db *sql.DB, q string) (*sql.Row, error) {
@@ -52,7 +57,7 @@ func readInt(db *sql.DB, q string) (int64, error) {
 }
 
 func makeQuery(key string) string {
-	queryStrings := queries[key]
+	queryStrings := tempQueries[key]
 
 	var q string
 	if len(queryStrings) > 4 {
@@ -112,16 +117,21 @@ func Run(db *sql.DB) error {
 		return err
 	}
 
+	talentPoints, err := readInt(db, makeQuery("talent_points"))
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf(
-		"Name:           %s\nXP:             %d\nHouse:          %s\nGalleons:       %d\nInventory size: %d\n\n",
-		playerName, xp, house, galleons, inv_size,
+		"Name:           %s\nXP:             %d\nHouse:          %s\nGalleons:       %d\nInventory size: %d\nTalent points:  %d\n\n",
+		playerName, xp, house, galleons, inv_size, talentPoints,
 	)
 
 	fmt.Println("Inventory:")
 	var itemId string
 	var quantity int64
 
-	rows, err := db.Query(`SELECT "ItemID", "Count" FROM "InventoryDynamic" WHERE "CharacterID" = "Player0" AND "HolderID" = "ResourceInventory"`)
+	rows, err := db.Query(queries["inventory"])
 	if err != nil {
 		return err
 	}
