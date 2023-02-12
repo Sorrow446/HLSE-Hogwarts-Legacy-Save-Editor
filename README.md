@@ -12,6 +12,15 @@ Set first and last name and write to out.sav:
 Set quantities of inventory items:   
 `hlse_x64.exe -i HL-00-00.sav --item-quantities StenchOfTheDead 100 LacewingFlies 10`
 
+Set player's house to Hufflepuff:   
+`hlse_x64.exe -i HL-00-00.sav --house hufflepuff`
+
+Dump DB:   
+`hlse_x64.exe -i HL-00-00.sav -o out.db --dump-db`
+
+Inject DB:   
+`hlse_x64.exe -i out.db -o HL-00-00.sav --inject-db`
+
 Probe save:    
 `hlse_x64.exe -i HL-00-00.sav -p`
 ```
