@@ -126,7 +126,7 @@ func parseArgs() (*Args, error) {
 		args.Galleons == 0 && args.InventorySize == 0 &&
 		args.TalentPoints == 0 && len(args.ItemQuantities) < 1 &&
 		args.House == "" && args.FirstName == "" &&
-		args.Surname == "" && args.House == ""
+		args.Surname == ""
 	if noArgs {
 		return nil, errors.New("no write arguments were provided")
 	}
