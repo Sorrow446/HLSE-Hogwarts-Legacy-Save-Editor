@@ -15,6 +15,9 @@ Set quantities of inventory items:
 Set player's house to Hufflepuff:   
 `hlse_x64.exe -i HL-00-00.sav --house hufflepuff`
 
+Be careful. If the player's currently in another house's common room at the time, the player will get locked in there.
+Use this with the unstuck flag to prevent this.
+
 Dump DB:   
 `hlse_x64.exe -i HL-00-00.sav -o out.db --dump-db`
 
