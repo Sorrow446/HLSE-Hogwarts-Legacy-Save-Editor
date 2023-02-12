@@ -17,29 +17,20 @@ import (
 	"main/probe"
 )
 
-var dbPath = filepath.Join(os.TempDir(), "hlse_tmp.db")
+var tmpDbPath = filepath.Join(os.TempDir(), "hlse_tmp.db")
 
-var magic = [4]byte{'\x47', '\x56', '\x41', '\x53'}
+var magic = []byte{'\x47', '\x56', '\x41', '\x53'}
+
+var dbMagic = []byte{
+	'\x53', '\x51', '\x4C', '\x69', '\x74', '\x65',
+	'\x20', '\x66', '\x6F', '\x72', '\x6D', '\x61',
+	'\x74', '\x20', '\x33',
+}
 
 var rawDbImageStr = []byte{
 	'\x52', '\x61', '\x77', '\x44', '\x61', '\x74',
 	'\x61', '\x62', '\x61', '\x73', '\x65', '\x49',
 	'\x6D', '\x61', '\x67', '\x65',
-}
-
-func extractDb(saveData []byte) (int, int, error) {
-	imageStrStart := bytes.Index(saveData, rawDbImageStr)
-	if imageStrStart == -1 {
-		return 0, 0, errors.New("couldn't find db image string")
-	}
-	dbSizeOffset := imageStrStart+61
-	dbStartOffset := dbSizeOffset+4
-	dbSizeBytes := saveData[dbSizeOffset:dbStartOffset]
-	dbSize := binary.LittleEndian.Uint32(dbSizeBytes)
-	dbEndOffset := dbStartOffset+int(dbSize)
-	dbData := saveData[dbStartOffset:dbEndOffset]
-	err := os.WriteFile(dbPath, dbData, 0755)
-	return imageStrStart, dbEndOffset, err
 }
 
 var queries = map[string]string{
@@ -130,9 +121,10 @@ func parseArgs() (*Args, error) {
 		return nil, errors.New("inventory size can't be less than 20")
 	}
 
-	noArgs := !args.Probe && !args.Unstuck && !args.ResetTalentPoints &&
-		args.XP == 0 && args.Galleons == 0 && args.InventorySize == 0 &&
-		args.TalentPoints == 0 && len(args.ItemQuantities) < 1 && 
+	noArgs := !args.Probe && !args.Unstuck && !args.DumpDB &&
+		!args.InjectDB && !args.ResetTalentPoints && args.XP == 0 &&
+		args.Galleons == 0 && args.InventorySize == 0 &&
+		args.TalentPoints == 0 && len(args.ItemQuantities) < 1 &&
 		args.FirstName == "" && args.Surname == "" && args.House == ""
 	if noArgs {
 		return nil, errors.New("no write arguments were provided")
@@ -150,11 +142,66 @@ func parseArgs() (*Args, error) {
 		args.House = house
 	}
 
+	if args.DumpDB && args.OutPath == "" {
+		return nil, errors.New("output path of db required when dumping db")
+	}
+	if args.InjectDB {
+		if args.OutPath == "" {
+			return nil, errors.New("output path of save file required when injecting db")
+		}
+		inPath := args.InPath
+		outPath := args.OutPath
+
+		args.InPath = outPath
+		args.OutPath = inPath
+	}
+
 	if args.OutPath == "" {
 		args.OutPath = args.InPath
 	}
 
 	return &args, nil
+}
+
+func extractDb(saveData []byte, dumpDb, injectDb bool, outPath string) (string, int, int, error) {
+	var (
+		dbPath string
+		dbData []byte
+		err error
+	)
+
+	imageStrStart := bytes.Index(saveData, rawDbImageStr)
+	if imageStrStart == -1 {
+		return "", 0, 0, errors.New("couldn't find db image string")
+	}
+	dbSizeOffset := imageStrStart+61
+	dbStartOffset := dbSizeOffset+4
+	dbSizeBytes := saveData[dbSizeOffset:dbStartOffset]
+	dbSize := binary.LittleEndian.Uint32(dbSizeBytes)
+	dbEndOffset := dbStartOffset+int(dbSize)
+	if injectDb {
+		dbData, err = os.ReadFile(outPath)
+		if err != nil {
+			return "", 0, 0, err
+		}
+	} else {
+		dbData = saveData[dbStartOffset:dbEndOffset]
+	}
+
+	if dumpDb || injectDb {
+		dbPath = outPath
+	} else {
+		dbPath = tmpDbPath
+	}
+
+	if !injectDb {
+		err = os.WriteFile(dbPath, dbData, 0755)
+		if err != nil {
+			return "", 0, 0, err
+		}
+	}
+	
+	return dbPath, imageStrStart, dbEndOffset, nil
 }
 
 func updateRow(db *sql.DB, q string) error {
@@ -215,6 +262,82 @@ func writeSave(updatedDbBytes, saveData []byte, imageStrStart, dbEndOffset int, 
 	return err
 }
 
+func writeToDb(db *sql.DB, args *Args) error {
+	defer db.Close()
+	if args.XP > 0 {
+		err := updateRow(db, fmt.Sprintf(queries["xp"], args.XP))
+		if err != nil {
+			return err
+		}
+	}
+
+	if args.Galleons > 0 {
+		err := updateRow(db, fmt.Sprintf(queries["galleons"], args.Galleons))
+		if err != nil {
+			return err
+		}
+	}
+
+	if args.InventorySize > 0 {
+		err := updateRow(db, fmt.Sprintf(queries["inventory_size"], args.InventorySize))
+		if err != nil {
+			return err
+		}
+	}
+
+	if args.FirstName != "" {
+		err := updateRow(db, fmt.Sprintf(queries["first_name"], args.FirstName))
+		if err != nil {
+			return err
+		}
+	}
+
+	if args.Surname != "" {
+		err := updateRow(db, fmt.Sprintf(queries["surname"], args.Surname))
+		if err != nil {
+			return err
+		}
+	}
+
+	if args.House != "" {
+		err := updateRow(db, fmt.Sprintf(queries["house"], args.House))
+		if err != nil {
+			return err
+		}
+	}
+
+
+	if len(args.ItemQuantities) > 0 {
+		for _, pair := range args.ParsedItemQuants {
+			err := updateRow(db, fmt.Sprintf(queries["inventory_quant"], pair.Quantity, pair.ItemID))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if args.TalentPoints > 0 || args.ResetTalentPoints {
+		err := updateRow(db, fmt.Sprintf(queries["talent_points"], args.TalentPoints))
+		if err != nil {
+			return err
+		}
+	}
+
+	if args.Unstuck {
+		for dataName, dataValue := range unstuckMap {
+			err := updateRow(db, fmt.Sprintf(queries["unstuck"], dataValue, dataName))
+			if err != nil {
+				return err
+			}		
+		}
+		err := updateRow(db, queries["world"])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func main() {
 	args, err := parseArgs()
 	if err != nil {
@@ -225,117 +348,51 @@ func main() {
 		panic(err)
 	}
 
-	if !bytes.Equal(saveData[:4], magic[:]) {
+	if !bytes.Equal(saveData[:4], magic) {
 		panic("invalid save file magic")
 	}
 
-	imageStrStart, dbEndOffset, err := extractDb(saveData)
+	dbPath, imageStrStart, dbEndOffset, err := extractDb(saveData, args.DumpDB, args.InjectDB, args.OutPath)
 	if err != nil {
 		panic(err)
 	}
 
-	defer os.Remove(dbPath)
-
-	db, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		panic(err)
-	}
-
-	if args.Probe {
-		err = probe.Run(db)
-		db.Close()
-		if err != nil {
-			panic(err)
-		}
+	if args.DumpDB {
 		os.Exit(0)
 	}
-	
-	if args.XP > 0 {
-		err = updateRow(db, fmt.Sprintf(queries["xp"], args.XP))
+
+	if !args.InjectDB {
+		defer os.Remove(dbPath)
+		db, err := sql.Open("sqlite3", dbPath)
 		if err != nil {
-			db.Close()
 			panic(err)
 		}
-	}
 
-	if args.Galleons > 0 {
-		err = updateRow(db, fmt.Sprintf(queries["galleons"], args.Galleons))
-		if err != nil {
+		if args.Probe {
+			err = probe.Run(db)
 			db.Close()
-			panic(err)
-		}
-	}
-
-	if args.InventorySize > 0 {
-		err = updateRow(db, fmt.Sprintf(queries["inventory_size"], args.InventorySize))
-		if err != nil {
-			db.Close()
-			panic(err)
-		}
-	}
-
-	if args.FirstName != "" {
-		err = updateRow(db, fmt.Sprintf(queries["first_name"], args.FirstName))
-		if err != nil {
-			db.Close()
-			panic(err)
-		}
-	}
-
-	if args.Surname != "" {
-		err = updateRow(db, fmt.Sprintf(queries["surname"], args.Surname))
-		if err != nil {
-			db.Close()
-			panic(err)
-		}
-	}
-
-	if args.House != "" {
-		err = updateRow(db, fmt.Sprintf(queries["house"], args.House))
-		if err != nil {
-			db.Close()
-			panic(err)
-		}
-	}
-
-
-	if len(args.ItemQuantities) > 0 {
-		for _, pair := range args.ParsedItemQuants {
-			err = updateRow(db, fmt.Sprintf(queries["inventory_quant"], pair.Quantity, pair.ItemID))
 			if err != nil {
-				db.Close()
 				panic(err)
 			}
+			os.Exit(0)
 		}
-	}
 
-	if args.TalentPoints > 0 || args.ResetTalentPoints {
-		err = updateRow(db, fmt.Sprintf(queries["talent_points"], args.TalentPoints))
+		err = writeToDb(db, args)
 		if err != nil {
-			db.Close()
 			panic(err)
 		}
 	}
 
-	if args.Unstuck {
-		for dataName, dataValue := range unstuckMap {
-			err = updateRow(db, fmt.Sprintf(queries["unstuck"], dataValue, dataName))
-			if err != nil {
-				db.Close()
-				panic(err)
-			}		
-		}
-		err = updateRow(db, queries["world"])
-		if err != nil {
-			db.Close()
-			panic(err)
-		}
-	}
-
-	db.Close()
 	updatedDbBytes, err := os.ReadFile(dbPath)
 	if err != nil {
 		panic(err)
+	}
+
+	if args.InjectDB {
+		if !bytes.Equal(updatedDbBytes[:15], dbMagic) {
+			panic("invalid db magic")
+		}
+		args.OutPath = args.InPath
 	}
 
 	err = writeSave(updatedDbBytes, saveData, imageStrStart, dbEndOffset, args.OutPath)

@@ -15,6 +15,8 @@ type Args struct {
 	TalentPoints      int          `arg:"--talent-points" help:"Set talent points."`
 	Unstuck           bool         `arg:"--unstuck" help:"Sets the player's coordinates to The Great Hall."`
 	ResetTalentPoints bool         `arg:"--reset-talent-points" help:"Resets the player's talent points."`
+	DumpDB            bool         `arg:"--dump-db" help:"Dump DB from save file and exit."`
+	InjectDB          bool         `arg:"--inject-db" help:"Inject DB into save file."`
 }
 
 type ItemPairs struct {
