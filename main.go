@@ -125,7 +125,8 @@ func parseArgs() (*Args, error) {
 		!args.InjectDB && !args.ResetTalentPoints && args.XP == 0 &&
 		args.Galleons == 0 && args.InventorySize == 0 &&
 		args.TalentPoints == 0 && len(args.ItemQuantities) < 1 &&
-		args.FirstName == "" && args.Surname == "" && args.House == ""
+		args.House == "" && args.FirstName == "" &&
+		args.Surname == "" && args.House == ""
 	if noArgs {
 		return nil, errors.New("no write arguments were provided")
 	}
