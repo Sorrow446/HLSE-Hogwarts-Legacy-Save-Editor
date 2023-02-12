@@ -50,6 +50,17 @@ var queries = map[string]string{
 	"inventory_size":  `UPDATE "MiscDataDynamic" SET "DataValue" = %d WHERE "DataName" = "BaseInventoryCapacity"`,
 	"inventory_quant": `UPDATE "InventoryDynamic" SET "Count" = %d WHERE "CharacterID" = "Player0" AND "HolderID" = "ResourceInventory" AND LOWER(ItemId) = "%s"`,
 	"talent_points":   `UPDATE "MiscDataDynamic" SET "DataValue" = %d WHERE "DataOwner" = "Player0" AND "DataName" = "PerkPoints"`,
+	"unstuck":         `UPDATE "MiscDataDynamic" SET "DataValue" = %f WHERE "DataOwner" = "Player" AND "DataName" = "%s"`,
+	"world":           `UPDATE "MiscDataDynamic" SET "DataValue" = "Overland" WHERE "DataOwner" = "Player" AND "DataName" = "World"`,
+}
+
+var unstuckMap = map[string]float64{
+	"LocX":  367983.1875,
+	"LocY":  -452051.0625,
+	"LocZ":  -81909.851562,
+	"Pitch": 0.0,
+	"Yaw":   79.999962,
+	"Roll":  0.0,
 }
 
 func containsItemId(parsed []*ItemPairs, itemId string) bool {
@@ -111,10 +122,10 @@ func parseArgs() (*Args, error) {
 		return nil, errors.New("inventory size can't be less than 20")
 	}
 
-	noArgs := !args.Probe && args.XP == 0 && args.Galleons == 0 &&
-		args.InventorySize == 0 && args.TalentPoints == 0 &&
-		len(args.ItemQuantities) < 1 && args.FirstName == "" && args.Surname == ""
-
+	noArgs := !args.Probe && !args.Unstuck && args.XP == 0 && 
+		args.Galleons == 0 && args.InventorySize == 0 && 
+		args.TalentPoints == 0 && len(args.ItemQuantities) < 1 && 
+		args.FirstName == "" && args.Surname == ""
 	if noArgs {
 		return nil, errors.New("no write arguments were provided")
 	}
@@ -275,6 +286,21 @@ func main() {
 
 	if args.TalentPoints > 0 {
 		err = updateRow(db, fmt.Sprintf(queries["talent_points"], args.TalentPoints))
+		if err != nil {
+			db.Close()
+			panic(err)
+		}
+	}
+
+	if args.Unstuck {
+		for dataName, dataValue := range unstuckMap {
+			err = updateRow(db, fmt.Sprintf(queries["unstuck"], dataValue, dataName))
+			if err != nil {
+				db.Close()
+				panic(err)
+			}		
+		}
+		err = updateRow(db, queries["world"])
 		if err != nil {
 			db.Close()
 			panic(err)

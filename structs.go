@@ -12,6 +12,7 @@ type Args struct {
 	ItemQuantities   []string `arg:"--item-quantities" help:"Set quantities of inventory items. <item ID> <quantity> pairs separated by spaces."`
 	ParsedItemQuants []*ItemPairs `arg:"-"`
 	TalentPoints     int      `arg:"--talent-points" help:"Set talent points."`
+	Unstuck          bool     `arg:"--unstuck" help:"Sets the player's coordinates to The Great Hall."`
 }
 
 type ItemPairs struct {

@@ -97,6 +97,7 @@ func Run(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+
 	xp, err := readInt(db, makeQuery("xp"))
 	if err != nil {
 		return err
@@ -119,7 +120,11 @@ func Run(db *sql.DB) error {
 
 	talentPoints, err := readInt(db, makeQuery("talent_points"))
 	if err != nil {
-		return err
+		if err == sql.ErrNoRows {
+			talentPoints = 0
+		} else {
+			return err
+		}
 	}
 
 	fmt.Printf(
