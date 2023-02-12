@@ -30,7 +30,7 @@ AshwinderEggs, 37
 ```
 
 ```
-Usage: hlse_x64.exe --inpath INPATH [--outpath OUTPATH] [--xp XP] [--galleons GALLEONS] [--first-name FIRST-NAME] [--last-name LAST-NAME] [--inventory-size INVENTORY-SIZE] [--probe] [--item-quantities ITEM-QUANTITIES]
+Usage: hlse_x64.exe --inpath INPATH [--outpath OUTPATH] [--xp XP] [--galleons GALLEONS] [--first-name FIRST-NAME] [--last-name LAST-NAME] [--house HOUSE] [--inventory-size INVENTORY-SIZE] [--probe] [--item-quantities ITEM-QUANTITIES] [--talent-points TALENT-POINTS] [--unstuck] [--reset-talent-points]
 
 Options:
   --inpath INPATH, -i INPATH
@@ -43,11 +43,17 @@ Options:
                          Set character first name.
   --last-name LAST-NAME
                          Set character last name.
+  --house HOUSE          Set player's house. gryffindor, ravenclaw, hufflepuff, slytherin
   --inventory-size INVENTORY-SIZE
                          Set inventory size.
   --probe, -p            Probe save file and exit.
   --item-quantities ITEM-QUANTITIES
                          Set quantities of inventory items. <item ID> <quantity> pairs separated by spaces.
+  --talent-points TALENT-POINTS
+                         Set talent points.
+  --unstuck              Sets the player's coordinates to The Great Hall.
+  --reset-talent-points
+                         Resets the player's talent points.
   --help, -h             display this help and exit
 ```
 
