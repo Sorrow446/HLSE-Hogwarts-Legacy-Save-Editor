@@ -52,6 +52,7 @@ var queries = map[string]string{
 	"talent_points":   `UPDATE "MiscDataDynamic" SET "DataValue" = %d WHERE "DataOwner" = "Player0" AND "DataName" = "PerkPoints"`,
 	"unstuck":         `UPDATE "MiscDataDynamic" SET "DataValue" = %f WHERE "DataOwner" = "Player" AND "DataName" = "%s"`,
 	"world":           `UPDATE "MiscDataDynamic" SET "DataValue" = "Overland" WHERE "DataOwner" = "Player" AND "DataName" = "World"`,
+	"house":           `UPDATE "MiscDataDynamic" SET "DataValue" = "%s" WHERE "DataOwner" = "Player" AND "DataName" = "HouseID"`,
 }
 
 var unstuckMap = map[string]float64{
@@ -62,6 +63,13 @@ var unstuckMap = map[string]float64{
 	"Yaw":   79.999962,
 	"Roll":  0.0,
 }
+
+var resolveHouse = map[string]string{
+	"gryffindor": "Gryffindor",
+	"ravenclaw":  "Ravenclaw",
+	"hufflepuff": "Hufflepuff",
+	"slytherin":  "Slytherin",
+} 
 
 func containsItemId(parsed []*ItemPairs, itemId string) bool {
 	for _, pair := range parsed {
@@ -122,16 +130,24 @@ func parseArgs() (*Args, error) {
 		return nil, errors.New("inventory size can't be less than 20")
 	}
 
-	noArgs := !args.Probe && !args.Unstuck && args.XP == 0 && 
-		args.Galleons == 0 && args.InventorySize == 0 && 
+	noArgs := !args.Probe && !args.Unstuck && !args.ResetTalentPoints &&
+		args.XP == 0 && args.Galleons == 0 && args.InventorySize == 0 &&
 		args.TalentPoints == 0 && len(args.ItemQuantities) < 1 && 
-		args.FirstName == "" && args.Surname == ""
+		args.FirstName == "" && args.Surname == "" && args.House == ""
 	if noArgs {
 		return nil, errors.New("no write arguments were provided")
 	}
 
 	if args.TalentPoints < 0 {
 		return nil, errors.New("talent points can't be negative")
+	}
+
+	if args.House != "" {
+		house, ok := resolveHouse[strings.ToLower(args.House)]
+		if !ok {
+			return nil, errors.New("invalid house")
+		}
+		args.House = house
 	}
 
 	if args.OutPath == "" {
@@ -274,6 +290,15 @@ func main() {
 		}
 	}
 
+	if args.House != "" {
+		err = updateRow(db, fmt.Sprintf(queries["house"], args.House))
+		if err != nil {
+			db.Close()
+			panic(err)
+		}
+	}
+
+
 	if len(args.ItemQuantities) > 0 {
 		for _, pair := range args.ParsedItemQuants {
 			err = updateRow(db, fmt.Sprintf(queries["inventory_quant"], pair.Quantity, pair.ItemID))
@@ -284,7 +309,7 @@ func main() {
 		}
 	}
 
-	if args.TalentPoints > 0 {
+	if args.TalentPoints > 0 || args.ResetTalentPoints {
 		err = updateRow(db, fmt.Sprintf(queries["talent_points"], args.TalentPoints))
 		if err != nil {
 			db.Close()
