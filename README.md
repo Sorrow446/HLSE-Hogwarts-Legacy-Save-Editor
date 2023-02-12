@@ -30,7 +30,7 @@ AshwinderEggs, 37
 ```
 
 ```
-Usage: hlse_x64.exe --inpath INPATH [--outpath OUTPATH] [--xp XP] [--galleons GALLEONS] [--first-name FIRST-NAME] [--last-name LAST-NAME] [--house HOUSE] [--inventory-size INVENTORY-SIZE] [--probe] [--item-quantities ITEM-QUANTITIES] [--talent-points TALENT-POINTS] [--unstuck] [--reset-talent-points]
+Usage: hlse_x64.exe --inpath INPATH [--outpath OUTPATH] [--xp XP] [--galleons GALLEONS] [--first-name FIRST-NAME] [--last-name LAST-NAME] [--house HOUSE] [--inventory-size INVENTORY-SIZE] [--probe] [--item-quantities ITEM-QUANTITIES] [--talent-points TALENT-POINTS] [--unstuck] [--reset-talent-points] [--dump-db] [--inject-db]
 
 Options:
   --inpath INPATH, -i INPATH
@@ -54,6 +54,8 @@ Options:
   --unstuck              Sets the player's coordinates to The Great Hall.
   --reset-talent-points
                          Resets the player's talent points.
+  --dump-db              Dump DB from save file and exit.
+  --inject-db            Inject DB into save file.
   --help, -h             display this help and exit
 ```
 
