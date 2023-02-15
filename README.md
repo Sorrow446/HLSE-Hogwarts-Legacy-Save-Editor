@@ -18,6 +18,9 @@ Set player's house to Hufflepuff:
 Be careful. If the player's currently in another house's common room at the time, the player will get locked in there.
 Use this with the unstuck flag to prevent this or just fast travel.
 
+Customise wand:   
+`hlse_x64.exe -i HL-00-00.sav --wand-base soft_spiral_warm_brown --wand-core dragon_heartstring`
+
 Dump DB:   
 `hlse_x64.exe -i HL-00-00.sav -o out.db --dump-db`
 
