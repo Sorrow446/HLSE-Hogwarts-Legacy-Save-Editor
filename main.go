@@ -119,6 +119,14 @@ func parseWand(args *Args) (*Wand, error) {
 		wand.Length = length
 	}
 
+	if args.WandFlex != "" {
+		flex, ok := resolveWandParts["flex"][strings.ToLower(args.WandFlex)]
+		if !ok {
+			return nil, fmt.Errorf(errTemp, "flex")
+		}
+		wand.Flex = flex
+	}
+
 	// if args.WandStyle != "" {
 	// 	invalidStyle := fmt.Errorf(errTemp, "style")
 	// 	fullStyle := strings.ToLower(args.WandStyle)
